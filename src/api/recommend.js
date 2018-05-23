@@ -1,5 +1,5 @@
 import jsonp from 'common/js/jsonp'
-import {commonParams, options} from './config.js'
+import {commonParams, options} from './config'
 import axios from 'axios'
 
 export function getRecommend() {
@@ -27,6 +27,28 @@ export function getDiscList() {
     categoryId: 10000000,
     rnd: Math.random(),
     format: 'json'
+  })
+
+  return axios.get(url, {
+    params: data
+  }).then((res) => {
+    return Promise.resolve(res.data)
+  })
+}
+
+export function getSongList(disstid) {
+  const url = '/api/getSongList'
+
+  const data = Object.assign({}, commonParams, {
+    disstid,
+    type: 1,
+    json: 1,
+    utf8: 1,
+    onlysong: 0,
+    platform: 'yqq',
+    format: 'json',
+    hostUin: 0,
+    needNewCode: 0
   })
 
   return axios.get(url, {

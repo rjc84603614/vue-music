@@ -1,33 +1,31 @@
 <template>
-  <scroll class="listview" 
-          :data="data" 
-          ref="listview" 
-          :listen-scroll = "listenScroll" 
-          @scroll="scroll" 
-          :probe-type="probeType">
+  <scroll @scroll="scroll"
+          :listen-scroll="listenScroll"
+          :probe-type="probeType"
+          :data="data"
+          class="listview"
+          ref="listview">
     <ul>
       <li v-for="group in data" class="list-group" ref="listGroup">
         <h2 class="list-group-title">{{group.title}}</h2>
-        <ul>
+        <uL>
           <li @click="selectItem(item)" v-for="item in group.items" class="list-group-item">
-            <img class="avatar" v-lazy="item.avatar"/>
+            <img class="avatar" v-lazy="item.avatar">
             <span class="name">{{item.name}}</span>
           </li>
-        </ul>
+        </uL>
       </li>
     </ul>
-    <div class="list-shortcut" @touchstart="onShortcutTouchStart" @touchmove.stop.prevent="onShortcutTouchMove">
+    <div class="list-shortcut" @touchstart.stop.prevent="onShortcutTouchStart" @touchmove.stop.prevent="onShortcutTouchMove"
+         @touchend.stop>
       <ul>
-        <li v-for="(item,index) in shortcutList" 
-            class="item" 
-            :class="{'current':currentIndex===index}"
-            :data-index="index">
-          {{item}}
+        <li v-for="(item, index) in shortcutList" :data-index="index" class="item"
+            :class="{'current':currentIndex===index}">{{item}}
         </li>
       </ul>
     </div>
-    <div class="list-fixed" v-show="fixedTitle" ref="fixed">
-      <h1 class="fixed-title">{{fixedTitle}}</h1>
+    <div class="list-fixed" ref="fixed" v-show="fixedTitle">
+      <div class="fixed-title">{{fixedTitle}} </div>
     </div>
     <div v-show="!data.length" class="loading-container">
       <loading></loading>
@@ -40,27 +38,14 @@
   import Loading from 'base/loading/loading'
   import {getData} from 'common/js/dom'
 
-  const ANCHOR_HEIGHT = 18
   const TITLE_HEIGHT = 30
+  const ANCHOR_HEIGHT = 18
 
   export default {
-    created() {
-      this.touch = {}
-      this.listenScroll = true
-      this.listHeight = []
-      this.probeType = 3
-    },
     props: {
       data: {
         type: Array,
         default: []
-      }
-    },
-    data() {
-      return {
-        scrollY: -1,
-        currentIndex: 0,
-        diff: -1
       }
     },
     computed: {
@@ -76,12 +61,29 @@
         return this.data[this.currentIndex] ? this.data[this.currentIndex].title : ''
       }
     },
+    data() {
+      return {
+        scrollY: -1,
+        currentIndex: 0,
+        diff: -1
+      }
+    },
+    created() {
+      this.probeType = 3
+      this.listenScroll = true
+      this.touch = {}
+      this.listHeight = []
+    },
     methods: {
+      selectItem(item) {
+        this.$emit('select', item)
+      },
       onShortcutTouchStart(e) {
         let anchorIndex = getData(e.target, 'index')
         let firstTouch = e.touches[0]
         this.touch.y1 = firstTouch.pageY
         this.touch.anchorIndex = anchorIndex
+
         this._scrollTo(anchorIndex)
       },
       onShortcutTouchMove(e) {
@@ -89,22 +91,15 @@
         this.touch.y2 = firstTouch.pageY
         let delta = (this.touch.y2 - this.touch.y1) / ANCHOR_HEIGHT | 0
         let anchorIndex = parseInt(this.touch.anchorIndex) + delta
+
         this._scrollTo(anchorIndex)
       },
-      scroll(pos) {
-        this.scrollY = pos.y
+      refresh() {
+        this.$refs.listview.refresh()
       },
-      _scrollTo(index) {
-        if (!index && index !== 0) {
-          return
-        }
-        if (index < 0) {
-          index = 0
-        } else if (index > this.listHeight.length - 2) {
-          index = this.listHeight.length - 2
-        }
-        this.scrollY = -this.listHeight[index]
-        this.$refs.listview.scrollToElement(this.$refs.listGroup[index], 0)
+      scroll(pos) {
+        console.log(pos.y)
+        this.scrollY = pos.y
       },
       _calculateHeight() {
         this.listHeight = []
@@ -117,8 +112,17 @@
           this.listHeight.push(height)
         }
       },
-      selectItem(item) {
-        this.$emit('select', item)
+      _scrollTo(index) {
+        if (!index && index !== 0) {
+          return
+        }
+        if (index < 0) {
+          index = 0
+        } else if (index > this.listHeight.length - 2) {
+          index = this.listHeight.length - 2
+        }
+        this.scrollY = -this.listHeight[index]
+        this.$refs.listview.scrollToElement(this.$refs.listGroup[index], 0)
       }
     },
     watch: {
@@ -149,11 +153,11 @@
       },
       diff(newVal) {
         let fixedTop = (newVal > 0 && newVal < TITLE_HEIGHT) ? newVal - TITLE_HEIGHT : 0
-        if (this.fixTop === fixedTop) {
+        if (this.fixedTop === fixedTop) {
           return
         }
-        this.fixTop = fixedTop
-        this.$refs.fixed.style.transform = `translate3d(0,${fixedTop}px,0`
+        this.fixedTop = fixedTop
+        this.$refs.fixed.style.transform = `translate3d(0,${fixedTop}px,0)`
       }
     },
     components: {
